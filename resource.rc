@@ -16,7 +16,7 @@
 #define IDC_OVERWRITE_CHECK            1011
 #define IDC_STATIC                     1012
 
-IDI_MAIN_ICON ICON "StartOnlyOne.ico"
+IDI_MAIN_ICON ICON "Resources\\Images\\StartOnlyOne.ico"
 IDD_WIZARD DIALOGEX 100, 100, 320, 180
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "新建 StartOnlyOne 快捷方式"
