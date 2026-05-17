@@ -11,4 +11,12 @@
 #define IDC_NAME_EDIT                  1009
 #define IDC_ARGS_EDIT                  1010
 #define IDC_OVERWRITE_CHECK            1011
-#define IDC_STATIC                     1012
+#define IDD_TOOLMAIN                   200
+#define IDC_LIST_LINKS                 2001
+#define IDC_BACKUP_SELECTED            2002
+#define IDC_RESTORE_SELECTED           2003
+#define IDC_CONVERT_SELECTED           2004
+#define IDC_OPEN_CONFIG_DIR            2005
+#define IDC_REFRESH_LIST               2006
+#define IDC_SCAN_DESKTOP               2007
+#define IDC_SCAN_ALL                   2008

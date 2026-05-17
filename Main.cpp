@@ -1,6 +1,11 @@
 #define _CRT_SECURE_NO_WARNINGS
+#ifndef UNICODE
 #define UNICODE
+#endif
+#ifndef _UNICODE
 #define _UNICODE
+#endif
+#define _WIN32_IE 0x0600
 
 #include <Windows.h>
 #include <tchar.h>
@@ -16,9 +21,11 @@
 #include <objbase.h>
 #include <shlobj.h>
 #include <shellapi.h>
+#include <commctrl.h>
 
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "shell32.lib")
+#pragma comment(lib, "comctl32.lib")
 
 //+++++++++++++++++++++++++
 //         初始化          +
@@ -27,6 +34,9 @@
 std::wstring RootDir;          // %APPDATA%\StartOnlyOne
 std::wstring ManagedSooDir;    // %APPDATA%\StartOnlyOne\soo_profiles
 std::wstring LnkBackupDir;     // %APPDATA%\StartOnlyOne\lnk_backup
+
+// 初始化公共控件（用于列表视图）
+INITCOMMONCONTROLSEX icc = { sizeof(INITCOMMONCONTROLSEX), ICC_LISTVIEW_CLASSES };
 
 //+++++++++++++++++++++++++
 //        辅助函数         +
@@ -277,10 +287,7 @@ bool CreateManaged(const std::wstring& targetExe, const std::wstring& userArgs, 
         finalLnkPath = baseLnkPath;
     }
 
-    wchar_t selfPath[MAX_PATH];
-    GetModuleFileNameW(NULL, selfPath, MAX_PATH);
-    std::wstring args = L"\"" + sooPath + L"\"";
-    return CreateShortcutWithIcon(finalLnkPath, selfPath, args, targetExe);
+    return CreateShortcutWithIcon(finalLnkPath, sooPath, L"", targetExe);
 }
 
 bool CreateFree(const std::wstring& targetExe, const std::wstring& userArgs, const std::wstring& userFileName,
@@ -419,8 +426,139 @@ void Guide(const std::wstring& soogPath) {
 //小工具界面(未开工)
 //+++++++++++++++++++++++++
 
+static HWND g_hList;
+static std::wstring g_currentScanFolder;
+
+void ScanLnkFilesRecursive(const std::wstring& folder, HWND hList, int& itemIndex) {
+    std::wstring searchPath = folder + L"\\*";  // 通配符搜索所有文件和子文件夹
+    WIN32_FIND_DATAW fd;
+    HANDLE hFind = FindFirstFileW(searchPath.c_str(), &fd);
+    if (hFind == INVALID_HANDLE_VALUE) return;
+
+    do {
+        // 跳过 . 和 ..
+        if (wcscmp(fd.cFileName, L".") == 0 || wcscmp(fd.cFileName, L"..") == 0)
+            continue;
+
+        std::wstring fullPath = folder + L"\\" + fd.cFileName;
+
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            // 递归进入子文件夹
+            ScanLnkFilesRecursive(fullPath, hList, itemIndex);
+        }
+        else {
+            // 检查是否为 .lnk 文件
+            std::wstring ext = (wcsrchr(fd.cFileName, L'.') ? wcsrchr(fd.cFileName, L'.') : L"");
+            if (ext == L".lnk") {
+                LVITEMW item = { 0 };
+                item.mask = LVIF_TEXT;
+                item.iItem = itemIndex++;
+                item.pszText = fd.cFileName;
+                ListView_InsertItem(hList, &item);
+
+                // 完整路径（用于第二列）
+                std::vector<wchar_t> buf(fullPath.begin(), fullPath.end());
+                buf.push_back(L'\0');
+                ListView_SetItemText(hList, item.iItem, 1, buf.data());
+            }
+        }
+    } while (FindNextFileW(hFind, &fd));
+    FindClose(hFind);
+}
+
+// 供外部调用的入口（清空列表，重置索引）
+void ScanLnkFiles(const std::wstring& folder, HWND hList) {
+    ListView_DeleteAllItems(hList);
+    int itemIndex = 0;
+    ScanLnkFilesRecursive(folder, hList, itemIndex);
+}
+
+INT_PTR CALLBACK ToolMainProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
+    switch (msg) {
+    case WM_INITDIALOG: {
+        // 居中窗口
+        RECT rcDlg, rcScreen;
+        GetWindowRect(hDlg, &rcDlg);
+        SystemParametersInfoW(SPI_GETWORKAREA, 0, &rcScreen, 0);
+        int x = rcScreen.left + (rcScreen.right - rcScreen.left - (rcDlg.right - rcDlg.left)) / 2;
+        int y = rcScreen.top + (rcScreen.bottom - rcScreen.top - (rcDlg.bottom - rcDlg.top)) / 2;
+        SetWindowPos(hDlg, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+        // 设置图标
+        HINSTANCE hInst = (HINSTANCE)GetWindowLongPtrW(hDlg, GWLP_HINSTANCE);
+        HICON hIcon = LoadIconW(hInst, MAKEINTRESOURCEW(IDI_MAIN_ICON));
+        SendMessageW(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+        SendMessageW(hDlg, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+        // 初始化列表视图
+        g_hList = GetDlgItem(hDlg, IDC_LIST_LINKS);
+        ListView_SetExtendedListViewStyle(g_hList, LVS_EX_FULLROWSELECT);
+        LVCOLUMNW col = { 0 };
+        col.mask = LVCF_TEXT | LVCF_WIDTH;
+        col.pszText = const_cast<LPWSTR>(L"文件名");
+        col.cx = 200;
+        ListView_InsertColumn(g_hList, 0, &col);
+        col.pszText = const_cast<LPWSTR>(L"完整路径");
+        col.cx = 280;
+        ListView_InsertColumn(g_hList, 1, &col);
+        // 默认选中“仅桌面”
+        //CheckRadioButton(hDlg, IDC_SCAN_DESKTOP, IDC_SCAN_ALL, IDC_SCAN_DESKTOP);
+        // 获取桌面路径并扫描
+        wchar_t desktop[MAX_PATH];
+        SHGetFolderPathW(NULL, CSIDL_DESKTOP, NULL, 0, desktop);
+        g_currentScanFolder = desktop;
+        ScanLnkFiles(g_currentScanFolder, g_hList);
+        return TRUE;
+    }
+    case WM_COMMAND: {
+        switch (LOWORD(wParam)) {
+        case IDC_REFRESH_LIST: {
+            wchar_t desktop[MAX_PATH];
+            SHGetFolderPathW(NULL, CSIDL_DESKTOP, NULL, 0, desktop);
+            g_currentScanFolder = desktop;
+            ScanLnkFiles(g_currentScanFolder, g_hList);
+            return TRUE;
+        }
+        case IDC_OPEN_CONFIG_DIR: {
+            ShellExecuteW(NULL, L"explore", RootDir.c_str(), NULL, NULL, SW_SHOWNORMAL);
+            return TRUE;
+        }
+        case IDC_BACKUP_SELECTED:
+        case IDC_RESTORE_SELECTED:
+        case IDC_CONVERT_SELECTED: {
+            int sel = ListView_GetNextItem(g_hList, -1, LVNI_SELECTED);
+            if (sel == -1) {
+                MessageBoxW(hDlg, L"请先选中一个快捷方式", L"提示", MB_ICONINFORMATION);
+                return TRUE;
+            }
+            wchar_t fullPath[MAX_PATH];
+            ListView_GetItemText(g_hList, sel, 1, fullPath, MAX_PATH);
+            std::wstring lnkPath = fullPath;
+            if (LOWORD(wParam) == IDC_BACKUP_SELECTED) {
+                // TODO: 备份功能
+                MessageBoxW(hDlg, L"备份功能尚未实现", L"提示", MB_OK);
+            }
+            else if (LOWORD(wParam) == IDC_RESTORE_SELECTED) {
+                MessageBoxW(hDlg, L"还原功能尚未实现", L"提示", MB_OK);
+            }
+            else if (LOWORD(wParam) == IDC_CONVERT_SELECTED) {
+                MessageBoxW(hDlg, L"批量转换功能尚未实现", L"提示", MB_OK);
+            }
+            return TRUE;
+        }
+        case IDCANCEL:
+            EndDialog(hDlg, IDCANCEL);
+            return TRUE;
+        }
+        break;
+    }
+    case WM_CLOSE:
+        EndDialog(hDlg, IDCANCEL);
+        return TRUE;
+    }
+    return FALSE;
+}
+
 void ToolMain() {
-    MessageBoxW(NULL, L"StartOnlyOne已成功初始化", L"提示", MB_OK);
+    DialogBoxW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_TOOLMAIN), NULL, ToolMainProc);
 }
 
 //+++++++++++++++++++++++++
@@ -455,6 +593,7 @@ void CmdLinePros() {
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nShowCmd) {
     Init();
+    InitCommonControlsEx(&icc);
     CmdLinePros();
     return 0;
 }
