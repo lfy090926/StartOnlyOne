@@ -1,0 +1,14 @@
+#define IDD_WIZARD                     101
+#define IDC_TARGET_EDIT                1001
+#define IDC_BROWSE_BTN                 1002
+#define IDC_COOLDOWN_EDIT              1003
+#define IDC_MODE_MANAGED               1004
+#define IDC_MODE_FREE                  1005
+#define IDC_STATIC_TARGET              1006
+#define IDC_STATIC_COOLDOWN            1007
+#define IDC_STATIC_MODE                1008
+#define IDI_MAIN_ICON                  110
+#define IDC_NAME_EDIT                  1009
+#define IDC_ARGS_EDIT                  1010
+#define IDC_OVERWRITE_CHECK            1011
+#define IDC_STATIC                     1012
