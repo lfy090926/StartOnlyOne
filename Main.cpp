@@ -27,8 +27,6 @@
 #include <algorithm>
 #include <filesystem>
 
-//namespace fs = std::filesystem;
-
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "shell32.lib")
 #pragma comment(lib, "comctl32.lib")
@@ -173,38 +171,6 @@ std::wstring TimestampToDisplay(const std::wstring& timestamp) {
     return std::wstring(buf);
 }
 
-//void CopyDir(const std::wstring& source, const std::wstring& destimation) {
-//    std::filesystem::copy("dir1", "dir2", std::filesystem::copy_options::recursive);
-//}
-
-#if 0
-void CopyDirectory(string oldFilePath, string newFilePath)
-{
-    DirectoryInfo oldDirectory = new DirectoryInfo(oldFilePath);
-    DirectoryInfo newDirectory = new DirectoryInfo(newFilePath);
-    FileInfo[] fileInfo = oldDirectory.GetFiles();//获取文件夹下的文件集合
-    DirectoryInfo[] dir = oldDirectory.GetDirectories();//获取文件夹下的子文件夹集合
-    if (!newDirectory.Exists)
-    {
-        newDirectory.Create();
-    }
-    if (fileInfo.Length > 0)
-    {
-        foreach(FileInfo item in fileInfo)
-        {
-            item.CopyTo(newFilePath + "\\" + item.Name, true);//复制文件到新目录
-        }
-    }
-    if (dir.Length > 0)//递归结束条件
-    {
-        foreach(DirectoryInfo item in dir)
-        {
-            CopyDirectory(item.FullName, item.FullName.Replace(oldFilePath, newFilePath));//此处获取子文件路径和对应的新子文件夹路径作为参数
-        }
-    }
-}
-#endif
-
 bool CopyDir(const std::wstring source, const std::wstring destination) {
     if (!CreateDirectoryW(destination.c_str(), NULL)) {
         return false;
@@ -348,6 +314,7 @@ void CollectLnkFiles(const std::wstring& folder, std::vector<std::wstring>& outF
 std::wstring GetSystemPath(int type) {
     wchar_t path[MAX_PATH];
     if (SUCCEEDED(SHGetFolderPathW(NULL, type, NULL, 0, path))) return path;
+    return L"";
 }
 
 std::vector<std::wstring> GetAllBakRoots() {
@@ -374,13 +341,13 @@ BOOL IsRunningAsAdmin() {
 }
 
 void RunAsAdmin() {
-    LPWSTR path;
+    wchar_t path[MAX_PATH];
     GetModuleFileNameW(NULL, path, MAX_PATH);
-    SHELLEXECUTEINFO sei = { sizeof(sei) };
+    SHELLEXECUTEINFOW sei = { sizeof(sei) };
     sei.lpVerb = L"runas";
     sei.lpFile = path;
     sei.nShow = SW_SHOWNORMAL;
-    ShellExecuteEx(&sei);
+    ShellExecuteExW(&sei);
 }
 
 //+++++++++++++++++++++++++
@@ -773,7 +740,13 @@ void CmdLinePros() {
     LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
     if (!argv) return;
 
-    if (argc == 1) ToolMain();
+    if (argc == 1) {
+        if (!IsRunningAsAdmin()) {
+            RunAsAdmin();
+            return;
+        }
+        ToolMain();
+    }
     else if (argc >= 3 && !wcscmp(argv[1], L"/new")) Guide(argv[2]);
     else if (argc == 2) ReadSoo(argv[1]);
 
