@@ -6,6 +6,7 @@
 #define _UNICODE
 #endif
 #define _WIN32_IE 0x0600
+#define COOLDOWN 180
 
 #include <Windows.h>
 #include <tchar.h>
@@ -30,6 +31,9 @@
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "shell32.lib")
 #pragma comment(lib, "comctl32.lib")
+#pragma comment(linker,"\"/manifestdependency:type='win32' \
+name='Microsoft.Windows.Common-Controls' version='6.0.0.0' \
+processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 
 //+++++++++++++++++++++++++
 //         初始化          +
@@ -47,7 +51,7 @@ bool CreateManaged(const std::wstring& targetExe, const std::wstring& userArgs, 
     int cooldown, const std::wstring& defaultFolder, bool overwrite, HWND hwndOwner);
 void BackupDesktopAllLnk(HWND hParent);
 void RestoreBackupToDesktops(const std::wstring& backupFolder, HWND hParent);
-void ConvertDesktopAllLnk(HWND hParent);
+void ConvertDesktopAllLnk(HWND hParent, int cooldown);
 
 std::vector<int> BakRoots = { CSIDL_DESKTOP, CSIDL_COMMON_DESKTOPDIRECTORY };
 
@@ -55,12 +59,14 @@ std::vector<int> BakRoots = { CSIDL_DESKTOP, CSIDL_COMMON_DESKTOPDIRECTORY };
 //        辅助函数         +
 //+++++++++++++++++++++++++
 
+//获取哈希值
 std::string GetPathHash(const std::string& utf8Str) {
     std::hash<std::string> hasher;
     size_t hash = hasher(utf8Str);
     return std::to_string(hash);
 }
 
+//获取UTF8字符串的宽字符编码字符串
 std::wstring UTF8ToWide(const std::string& utf8) {
     if (utf8.empty()) return L"";
     int len = MultiByteToWideChar(CP_UTF8, 0, utf8.c_str(), -1, NULL, 0);
@@ -69,6 +75,7 @@ std::wstring UTF8ToWide(const std::string& utf8) {
     return result;
 }
 
+//获取宽字符字符串的UTF8编码字符串
 std::string WideToUTF8(const std::wstring& wstr) {
     if (wstr.empty()) return "";
     int len = WideCharToMultiByte(CP_UTF8, 0, wstr.c_str(), -1, NULL, 0, NULL, NULL);
@@ -77,6 +84,7 @@ std::string WideToUTF8(const std::wstring& wstr) {
     return result;
 }
 
+//创建目录（递归）
 void MakeDir(const std::wstring& path) {
     wchar_t tempPath[MAX_PATH];
     wcscpy_s(tempPath, MAX_PATH, path.c_str());
@@ -90,6 +98,7 @@ void MakeDir(const std::wstring& path) {
     _wmkdir(tempPath);
 }
 
+//获取文件路径的目录
 void GetDirFromPath(const std::wstring& filePath, std::wstring& outDir) {
     size_t pos = filePath.find_last_of(L"\\/");
     if (pos != std::wstring::npos) {
@@ -100,6 +109,7 @@ void GetDirFromPath(const std::wstring& filePath, std::wstring& outDir) {
     }
 }
 
+//创建有图标的快捷方式
 bool CreateShortcutWithIcon(const std::wstring& lnkPath, const std::wstring& targetExe,
     const std::wstring& arguments, const std::wstring& iconSource) {
     CoInitialize(NULL);
@@ -124,6 +134,7 @@ bool CreateShortcutWithIcon(const std::wstring& lnkPath, const std::wstring& tar
     return success;
 }
 
+
 std::wstring GetFileNameWithoutExt(const std::wstring& path) {
     size_t dot = path.find_last_of(L'.');
     size_t slash = path.find_last_of(L"\\/");
@@ -134,18 +145,23 @@ std::wstring GetFileNameWithoutExt(const std::wstring& path) {
     return path.substr(start);
 }
 
-std::wstring GetSOOPath(const std::wstring& targetExePath, const std::wstring& args) {
-    std::string combined = WideToUTF8(targetExePath) + "|" + WideToUTF8(args);
+//获取SOO文件的路径
+std::wstring GetSOOPath(const std::wstring& targetExePath, const std::wstring& args, int cooldown) {
+    wchar_t wcCooldown[64];
+    swprintf_s(wcCooldown, 64, L"%d", cooldown);
+    std::string combined = WideToUTF8(targetExePath) + "|" + WideToUTF8(args) + "|" + WideToUTF8(wcCooldown);
     std::string hash = GetPathHash(combined);
     std::wstring path = ManagedSooDir + L"\\" + UTF8ToWide(hash) + L".soo";
     return path;
 }
 
+//文件是否存在
 bool FileExists(const std::wstring& path) {
     std::ifstream f(path.c_str());
     return f.good();
 }
 
+//获取当前时间字符串
 std::wstring GetCurrentTimestampStr() {
     std::time_t CurrentTime = std::time(nullptr);
     wchar_t buf[64];
@@ -153,6 +169,7 @@ std::wstring GetCurrentTimestampStr() {
     return std::wstring(buf);
 }
 
+//时间字符串转换为可读格式
 std::wstring TimestampToDisplay(const std::wstring& timestamp) {
     char* wTimeStamp = (char*)timestamp.data();
     std::time_t CurrentTime = std::stoll(timestamp);
@@ -169,25 +186,6 @@ std::wstring TimestampToDisplay(const std::wstring& timestamp) {
         (int)year, (int)month, (int)day,
         (int)hour, (int)minute, (int)second);
     return std::wstring(buf);
-}
-
-bool CopyDir(const std::wstring source, const std::wstring destination) {
-    if (!CreateDirectoryW(destination.c_str(), NULL)) {
-        return false;
-    }
-    std::wstring searchPath = source;
-    if (!searchPath.empty() && searchPath.back() != L'\\')
-        searchPath += L'\\';
-    searchPath += L'*';
-    LPWIN32_FIND_DATAW data;
-    HANDLE file = FindFirstFileW(LPWSTR(source.c_str()), data);
-    if (data->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-        CopyDir(source + data->cFileName, destination + data->cFileName);
-    }
-    FindNextFileW(file, data);
-    BOOL bResult;
-    CopyFileW((source + data->cFileName).data(), (destination + data->cFileName).data(), bResult);
-    FindClose(file);
 }
 
 // 统一递归备份函数（所有备份共用）
@@ -239,6 +237,7 @@ void RestoreLnkRecursive(const std::wstring& srcDir, const std::wstring& dstDir)
     FindClose(hFind);
 }
 
+// 获取备份文件夹中的所有时间戳（按时间倒序）
 std::vector<std::wstring> GetBackupTimestamps(const std::wstring& backupDir) {
     std::vector<std::wstring> timestamps;
     std::wstring searchPath = backupDir + L"\\*";
@@ -258,7 +257,8 @@ std::vector<std::wstring> GetBackupTimestamps(const std::wstring& backupDir) {
     return timestamps;
 }
 
-bool ConvertSingleLnkToManaged(const std::wstring& lnkPath) {
+//将单个快捷方式转换为托管模式
+bool ConvertSingleLnkToManaged(const std::wstring& lnkPath, int cooldown) {
     CoInitialize(NULL);
     IShellLinkW* psl = NULL;
     HRESULT hr = CoCreateInstance(CLSID_ShellLink, NULL, CLSCTX_INPROC_SERVER, IID_IShellLinkW, (void**)&psl);
@@ -286,9 +286,10 @@ bool ConvertSingleLnkToManaged(const std::wstring& lnkPath) {
     std::wstring folder;
     GetDirFromPath(lnkPath, folder);
     std::wstring fileName = GetFileNameWithoutExt(lnkPath);
-    return CreateManaged(targetStr, args, fileName, 10, folder, true, NULL);
+    return CreateManaged(targetStr, args, fileName, cooldown, folder, true, NULL);
 }
 
+//获取文件夹中所有的快捷方式
 void CollectLnkFiles(const std::wstring& folder, std::vector<std::wstring>& outFiles) {
     std::wstring search = folder + L"\\*";
     WIN32_FIND_DATAW fd;
@@ -311,12 +312,14 @@ void CollectLnkFiles(const std::wstring& folder, std::vector<std::wstring>& outF
     FindClose(hFind);
 }
 
+//获取系统中特定的系统路径
 std::wstring GetSystemPath(int type) {
     wchar_t path[MAX_PATH];
     if (SUCCEEDED(SHGetFolderPathW(NULL, type, NULL, 0, path))) return path;
     return L"";
 }
 
+//获取所有的备份路径
 std::vector<std::wstring> GetAllBakRoots() {
     std::vector<std::wstring> paths;
     for (int type : BakRoots) {
@@ -328,6 +331,7 @@ std::vector<std::wstring> GetAllBakRoots() {
     return paths;
 }
 
+//是否以管理员身份运行
 BOOL IsRunningAsAdmin() {
     BOOL isAdmin = FALSE;
     PSID adminGroup = NULL;
@@ -340,6 +344,7 @@ BOOL IsRunningAsAdmin() {
     return isAdmin;
 }
 
+//以管理员身份运行程序
 void RunAsAdmin() {
     wchar_t path[MAX_PATH];
     GetModuleFileNameW(NULL, path, MAX_PATH);
@@ -351,9 +356,10 @@ void RunAsAdmin() {
 }
 
 //+++++++++++++++++++++++++
-//       工作目录创建       +
+//      工作目录创建       +
 //+++++++++++++++++++++++++
 
+//初始化工作目录
 void InitDir() {
     wchar_t AppData[MAX_PATH];
     SHGetFolderPathW(NULL, CSIDL_APPDATA, NULL, 0, AppData);
@@ -413,6 +419,7 @@ void Init() {
 //       SOO核心逻辑       +
 //+++++++++++++++++++++++++
 
+//SOO文件是否有效
 bool IsSooFileValid(const std::wstring& filePath) {
     std::ifstream ifs(WideToUTF8(filePath));
     if (!ifs.is_open()) return false;
@@ -431,6 +438,7 @@ bool IsSooFileValid(const std::wstring& filePath) {
     return true;
 }
 
+//创建SOO文件
 void CreateSoo(const std::wstring& sooFileName, const std::wstring& path, const std::wstring& args,
     long long currentStartTime, int preventTime) {
     Json::Value soo;
@@ -445,6 +453,7 @@ void CreateSoo(const std::wstring& sooFileName, const std::wstring& path, const 
     ofs.close();
 }
 
+//读取SOO文件并执行
 void ReadSoo(const std::wstring& file) {
     if (!IsSooFileValid(file)) {
         MessageBoxW(NULL, L"文件可能损坏或无读取权限!", L"警告", MB_ICONWARNING | MB_OK);
@@ -471,9 +480,10 @@ void ReadSoo(const std::wstring& file) {
 
 static std::wstring g_defaultFolder;
 
+//托管模式
 bool CreateManaged(const std::wstring& targetExe, const std::wstring& userArgs, const std::wstring& userFileName,
     int cooldown, const std::wstring& defaultFolder, bool overwrite, HWND hwndOwner) {
-    std::wstring sooPath = GetSOOPath(targetExe, userArgs);
+    std::wstring sooPath = GetSOOPath(targetExe, userArgs, cooldown);
     CreateSoo(sooPath, targetExe, userArgs, 0, cooldown);
 
     std::wstring lnkFileName = userFileName + L".lnk";
@@ -487,6 +497,7 @@ bool CreateManaged(const std::wstring& targetExe, const std::wstring& userArgs, 
     return CreateShortcutWithIcon(baseLnkPath, sooPath, L"", targetExe);
 }
 
+//自由模式
 bool CreateFree(const std::wstring& targetExe, const std::wstring& userArgs, const std::wstring& userFileName,
     int cooldown, const std::wstring& defaultFolder, bool overwrite, HWND hwndOwner) {
     std::wstring sooFileName = userFileName + L".soo";
@@ -501,6 +512,7 @@ bool CreateFree(const std::wstring& targetExe, const std::wstring& userArgs, con
     return true;
 }
 
+//窗口过程函数
 INT_PTR CALLBACK WizardProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
     switch (message) {
     case WM_INITDIALOG: {
@@ -522,7 +534,7 @@ INT_PTR CALLBACK WizardProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
             if (pos != std::wstring::npos) g_defaultFolder = g_defaultFolder.substr(0, pos + 1);
         }
         CheckRadioButton(hDlg, IDC_MODE_MANAGED, IDC_MODE_FREE, IDC_MODE_MANAGED);
-        SetDlgItemInt(hDlg, IDC_COOLDOWN_EDIT, 5, FALSE);
+        SetDlgItemInt(hDlg, IDC_COOLDOWN_EDIT, COOLDOWN, FALSE);
         return TRUE;
     }
     case WM_COMMAND: {
@@ -580,6 +592,7 @@ INT_PTR CALLBACK WizardProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
     return FALSE;
 }
 
+//引导程序
 void Guide(const std::wstring& soogPath) {
     std::wstring folder;
     GetDirFromPath(soogPath, folder);
@@ -591,7 +604,7 @@ void Guide(const std::wstring& soogPath) {
 //       桌面备份/还原      +
 //+++++++++++++++++++++++++
 
-
+//备份桌面所有快捷方式
 void BackupDesktopAllLnk(HWND hParent) {
     std::wstring backupRoot = LnkBackupDir + L"\\" + GetCurrentTimestampStr();
     MakeDir(backupRoot);
@@ -601,21 +614,22 @@ void BackupDesktopAllLnk(HWND hParent) {
     MessageBoxW(hParent, L"备份完成！", L"提示", MB_OK);
 }
 
+//恢复桌面所有快捷方式
 void RestoreBackupToDesktops(const std::wstring& backupFolder, HWND hParent) {
     RestoreLnkRecursive(backupFolder + L"\\CurrentUser", GetSystemPath(CSIDL_DESKTOP));
     RestoreLnkRecursive(backupFolder + L"\\Public", GetSystemPath(CSIDL_COMMON_DESKTOPDIRECTORY));
     SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, NULL, NULL);
 }
 
-
-void ConvertDesktopAllLnk(HWND hParent) {
+//转换桌面快捷方式为托管模式
+void ConvertDesktopAllLnk(HWND hParent, int cooldown) {
     auto desktops = GetAllBakRoots();
     std::vector<std::wstring> lnks;
     for (auto& d : desktops) CollectLnkFiles(d, lnks);
 
     int cnt = 0;
     for (auto& lnk : lnks) {
-        if (ConvertSingleLnkToManaged(lnk)) cnt++;
+        if (ConvertSingleLnkToManaged(lnk, cooldown)) cnt++;
     }
 
     wchar_t msg[256];
@@ -630,9 +644,20 @@ void ConvertDesktopAllLnk(HWND hParent) {
 static std::vector<std::wstring> g_backupList;
 static std::wstring g_selectedBackup;
 
+//还原备份选择窗口过程函数
 INT_PTR CALLBACK SelectBackupProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case WM_INITDIALOG: {
+        RECT rcDlg, rcScreen;
+        GetWindowRect(hDlg, &rcDlg);
+        SystemParametersInfoW(SPI_GETWORKAREA, 0, &rcScreen, 0);
+        int x = rcScreen.left + (rcScreen.right - rcScreen.left - (rcDlg.right - rcDlg.left)) / 2;
+        int y = rcScreen.top + (rcScreen.bottom - rcScreen.top - (rcDlg.bottom - rcDlg.top)) / 2;
+        SetWindowPos(hDlg, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+
+        HINSTANCE hInst = (HINSTANCE)GetWindowLongPtrW(hDlg, GWLP_HINSTANCE);
+        HICON hIcon = LoadIconW(hInst, MAKEINTRESOURCEW(IDI_MAIN_ICON));
+        SendMessageW(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
         g_backupList = *(std::vector<std::wstring>*)lParam;
         HWND hList = GetDlgItem(hDlg, IDC_BACKUP_LIST);
         ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT);
@@ -675,6 +700,92 @@ INT_PTR CALLBACK SelectBackupProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lPa
     return FALSE;
 }
 
+//转换桌面所有快捷方式引导
+INT_PTR CALLBACK ConvertGuideProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
+    switch (msg)
+    {
+    case WM_INITDIALOG: {
+        RECT rcDlg, rcScreen;
+        GetWindowRect(hDlg, &rcDlg);
+        SystemParametersInfoW(SPI_GETWORKAREA, 0, &rcScreen, 0);
+        int x = rcScreen.left + (rcScreen.right - rcScreen.left - (rcDlg.right - rcDlg.left)) / 2;
+        int y = rcScreen.top + (rcScreen.bottom - rcScreen.top - (rcDlg.bottom - rcDlg.top)) / 2;
+        SetWindowPos(hDlg, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+        SetDlgItemInt(hDlg, IDC_COOLDOWN_EDIT, COOLDOWN, FALSE);
+
+        HINSTANCE hInst = (HINSTANCE)GetWindowLongPtrW(hDlg, GWLP_HINSTANCE);
+        HICON hIcon = LoadIconW(hInst, MAKEINTRESOURCEW(IDI_MAIN_ICON));
+        SendMessageW(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+        return TRUE;
+    }
+    case WM_COMMAND:
+        switch (LOWORD(wParam)) {
+        case IDCANCEL: {
+            EndDialog(hDlg, IDCANCEL);
+            return FALSE;
+        }
+        case IDOK: {
+            int cooldown = max(0, GetDlgItemInt(hDlg, IDC_COOLDOWN_EDIT, NULL, FALSE));
+            ConvertDesktopAllLnk(hDlg, cooldown);
+            EndDialog(hDlg, IDCANCEL);
+            return TRUE;
+        }
+        return FALSE;
+        }
+        return FALSE;
+    case WM_CLOSE: {
+        EndDialog(hDlg, IDCANCEL);
+        return FALSE;
+    }
+    return FALSE;
+    }
+    return FALSE;
+}
+
+//备份并转换桌面所有快捷方式引导
+INT_PTR CALLBACK BackupConvertGuideProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
+    switch (msg)
+    {
+    case WM_INITDIALOG: {
+        RECT rcDlg, rcScreen;
+        GetWindowRect(hDlg, &rcDlg);
+        SystemParametersInfoW(SPI_GETWORKAREA, 0, &rcScreen, 0);
+        int x = rcScreen.left + (rcScreen.right - rcScreen.left - (rcDlg.right - rcDlg.left)) / 2;
+        int y = rcScreen.top + (rcScreen.bottom - rcScreen.top - (rcDlg.bottom - rcDlg.top)) / 2;
+        SetWindowPos(hDlg, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+        SetDlgItemInt(hDlg, IDC_COOLDOWN_EDIT, COOLDOWN, FALSE);
+
+        HINSTANCE hInst = (HINSTANCE)GetWindowLongPtrW(hDlg, GWLP_HINSTANCE);
+        HICON hIcon = LoadIconW(hInst, MAKEINTRESOURCEW(IDI_MAIN_ICON));
+        SendMessageW(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+        return TRUE;
+    }
+    case WM_COMMAND:
+        switch (LOWORD(wParam)) {
+        case IDCANCEL: {
+            EndDialog(hDlg, IDCANCEL);
+            return FALSE;
+        }
+        case IDOK: {
+            int cooldown = max(0, GetDlgItemInt(hDlg, IDC_COOLDOWN_EDIT, NULL, FALSE));
+            BackupDesktopAllLnk(hDlg);
+            ConvertDesktopAllLnk(hDlg, cooldown);
+            EndDialog(hDlg, IDCANCEL);
+            return TRUE;
+        }
+                 return FALSE;
+        }
+        return FALSE;
+    case WM_CLOSE: {
+        EndDialog(hDlg, IDCANCEL);
+        return FALSE;
+    }
+                 return FALSE;
+    }
+    return FALSE;
+}
+
+//工具主界面
 INT_PTR CALLBACK ToolMainProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case WM_INITDIALOG: {
@@ -706,19 +817,28 @@ INT_PTR CALLBACK ToolMainProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         case IDC_CONVERT_DESKTOP_ALL: {
             auto list = GetBackupTimestamps(LnkBackupDir);
             if (list.empty()) { MessageBoxW(hDlg, L"请先备份！", L"提示", MB_OK); return TRUE; }
-            ConvertDesktopAllLnk(hDlg);
+            ConvertDesktopAllLnk(hDlg, COOLDOWN);
             return TRUE; 
         }
         case IDC_BACKUP_AND_CONVERT:
             BackupDesktopAllLnk(hDlg);
-            ConvertDesktopAllLnk(hDlg);
+            ConvertDesktopAllLnk(hDlg, COOLDOWN);
             MessageBoxW(hDlg, L"备份+转换完成！", L"提示", MB_OK);
             return TRUE;
+        case IDC_CONVERT_GUIDE: {
+            DialogBoxParamW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_CONVERT_GUIDE), hDlg, ConvertGuideProc, 0);
+            return TRUE;
+        }
+        case IDC_BACKUP_CONVERT_GUIDE: {
+            DialogBoxParamW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_CONVERT_GUIDE), hDlg, BackupConvertGuideProc, 0);
+            return TRUE;
+
+        }
         case IDCANCEL:
             EndDialog(hDlg, IDCANCEL);
             return TRUE;
         }
-        break;
+        return FALSE;
     }
     case WM_CLOSE:
         EndDialog(hDlg, IDCANCEL);
@@ -727,6 +847,7 @@ INT_PTR CALLBACK ToolMainProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
+//工具主界面
 void ToolMain() {
     DialogBoxW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_TOOLMAIN), NULL, ToolMainProc);
 }
@@ -754,7 +875,6 @@ void CmdLinePros() {
 }
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nShowCmd) {
-    //return 0;
     Init();
     InitCommonControlsEx(&icc);
     CmdLinePros();

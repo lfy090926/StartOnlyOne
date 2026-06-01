@@ -12,13 +12,20 @@
 #define IDC_ARGS_EDIT                  1010
 #define IDC_OVERWRITE_CHECK            1011
 #define IDD_TOOLMAIN                   200
+#define IDC_STATIC                     -1
 // 四个按钮
 #define IDC_BACKUP_DESKTOP_ALL         2001
 #define IDC_RESTORE_BACKUP             2002
 #define IDC_CONVERT_DESKTOP_ALL        2003
 #define IDC_BACKUP_AND_CONVERT         2004
+#define IDC_CONVERT_GUIDE              2005
+#define IDC_BACKUP_CONVERT_GUIDE       2006
 
 // 备份选择对话框
 #define IDD_SELECT_BACKUP              210
 #define IDC_BACKUP_LIST                2101
 #define IDC_BTN_RESTORE_SELECTED       2102
+
+#define IDD_CONVERT_GUIDE              220
+
+#define IDD_BACKUP_CONVERT_GUIDE       230

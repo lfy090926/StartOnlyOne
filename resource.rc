@@ -1,21 +1,6 @@
 #include <windows.h>
 #include"resource.h"
 
-#define IDD_WIZARD                     101
-#define IDC_TARGET_EDIT                1001
-#define IDC_BROWSE_BTN                 1002
-#define IDC_COOLDOWN_EDIT              1003
-#define IDC_MODE_MANAGED               1004
-#define IDC_MODE_FREE                  1005
-#define IDC_STATIC_TARGET              1006
-#define IDC_STATIC_COOLDOWN            1007
-#define IDC_STATIC_MODE                1008
-#define IDI_MAIN_ICON                  110
-#define IDC_NAME_EDIT                  1009
-#define IDC_ARGS_EDIT                  1010
-#define IDC_OVERWRITE_CHECK            1011
-#define IDC_STATIC                     (-1)
-
 IDI_MAIN_ICON ICON "Resources\\Images\\StartOnlyOne.ico"
 IDD_WIZARD DIALOGEX 100, 100, 320, 180
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
@@ -46,16 +31,18 @@ PUSHBUTTON      "取消", IDCANCEL, 260, 155, 50, 14
 
 END
 
-IDD_TOOLMAIN DIALOGEX 0, 0, 400, 300
+IDD_TOOLMAIN DIALOGEX 0, 0, 400, 200
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX
 CAPTION "StartOnlyOne 工具"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
 LTEXT           "请选择要执行的操作：", -1, 20, 20, 200, 10
-PUSHBUTTON      "备份桌面所有快捷方式\n(遍历文件夹)", IDC_BACKUP_DESKTOP_ALL, 40, 50, 320, 40
-PUSHBUTTON      "还原备份的快捷方式", IDC_RESTORE_BACKUP, 40, 110, 320, 40
-PUSHBUTTON      "转换桌面快捷方式 (默认设置：冷却10秒)\n(请确保已备份)", IDC_CONVERT_DESKTOP_ALL, 40, 170, 320, 40
-PUSHBUTTON      "一键备份并转换 (默认设置：冷却10秒)", IDC_BACKUP_AND_CONVERT, 40, 230, 320, 40
+PUSHBUTTON      "备份桌面所有快捷方式\n(遍历文件夹)", IDC_BACKUP_DESKTOP_ALL, 40, 50, 160, 30
+PUSHBUTTON      "还原备份的快捷方式", IDC_RESTORE_BACKUP, 220, 50, 160, 30
+PUSHBUTTON      "转换桌面快捷方式 (默认设置：冷却180秒)", IDC_CONVERT_DESKTOP_ALL, 40, 90, 160, 30
+PUSHBUTTON      "一键备份并转换 (默认设置：冷却180秒)", IDC_BACKUP_AND_CONVERT, 220, 90, 160, 30
+PUSHBUTTON      "转换桌面快捷方式", IDC_CONVERT_GUIDE, 40, 130, 160, 30
+PUSHBUTTON      "备份并转换桌面快捷方式", IDC_BACKUP_CONVERT_GUIDE, 220, 130, 160, 30
 END
 
 IDD_SELECT_BACKUP DIALOGEX 0, 0, 300, 240
@@ -66,4 +53,15 @@ BEGIN
 CONTROL         "", IDC_BACKUP_LIST, "SysListView32", LVS_REPORT | LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 10, 10, 280, 170
 PUSHBUTTON      "还原选中备份", IDC_BTN_RESTORE_SELECTED, 80, 195, 100, 23
 PUSHBUTTON      "取消", IDCANCEL, 190, 195, 50, 23
+END
+
+IDD_CONVERT_GUIDE DIALOGEX 0, 0, 200, 60
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "转换桌面快捷方式"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+LTEXT           "请填写冷却时间(秒)：", -1, 10, 15, 110, 10
+EDITTEXT        IDC_COOLDOWN_EDIT, 120, 13, 60, 14, ES_NUMBER
+PUSHBUTTON      "确定", IDOK, 100, 35, 40, 15
+PUSHBUTTON      "取消", IDCANCEL, 150, 35, 40, 15
 END
