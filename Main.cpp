@@ -912,16 +912,24 @@ INT_PTR CALLBACK ToolMainProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
             return TRUE;
         }
         case IDC_BACKUP_AND_CONVERT:     // 一键备份并转换（默认冷却时间）
+        {
             BackupDesktopAllLnk(hDlg);
             ConvertDesktopAllLnk(hDlg, COOLDOWN);
             MessageBoxW(hDlg, L"备份+转换完成！", L"提示", MB_OK);
-            return TRUE;
+            return TRUE; 
+        }
         case IDC_CONVERT_GUIDE:          // 转换向导（可自定义冷却）
+        {
+            auto list = GetBackupTimestamps(LnkBackupDir);
+            if (list.empty()) { MessageBoxW(hDlg, L"请先备份！", L"提示", MB_OK); return TRUE; }
             DialogBoxParamW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_CONVERT_GUIDE), hDlg, ConvertGuideProc, 0);
-            return TRUE;
+            return TRUE; 
+        }
         case IDC_BACKUP_CONVERT_GUIDE:   // 备份并转换向导
+        {
             DialogBoxParamW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_CONVERT_GUIDE), hDlg, BackupConvertGuideProc, 0);
             return TRUE;
+        }
         case IDCANCEL:
             EndDialog(hDlg, IDCANCEL);
             return TRUE;
