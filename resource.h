@@ -20,6 +20,8 @@
 #define IDC_BACKUP_AND_CONVERT         2004
 #define IDC_CONVERT_GUIDE              2005
 #define IDC_BACKUP_CONVERT_GUIDE       2006
+#define IDC_ABOUT                      2007
+#define IDC_VERSION_COPYRIGHT          2008
 
 // 备份选择对话框
 #define IDD_SELECT_BACKUP              210
@@ -29,3 +31,7 @@
 #define IDD_CONVERT_GUIDE              220
 
 #define IDD_BACKUP_CONVERT_GUIDE       230
+
+#define IDD_ABOUT                      240
+#define IDC_VERSION                    2401
+#define IDC_COPYRIGHT                  2402

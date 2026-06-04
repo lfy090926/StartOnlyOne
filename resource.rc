@@ -2,7 +2,7 @@
 #include"resource.h"
 
 IDI_MAIN_ICON ICON "Resources\\Images\\StartOnlyOne.ico"
-IDD_WIZARD DIALOGEX 100, 100, 320, 180
+IDD_WIZARD DIALOGEX 100, 100, 320, 190
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "新建 StartOnlyOne 快捷方式"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -29,9 +29,11 @@ CONTROL         "自由模式(仅生成SOO，用户自选保存位置)", IDC_MODE_FREE, "Button"
 DEFPUSHBUTTON   "确定", IDOK, 200, 155, 50, 14
 PUSHBUTTON      "取消", IDCANCEL, 260, 155, 50, 14
 
+LTEXT           "版本号", IDC_VERSION_COPYRIGHT, 5, 175, 200, 10
+
 END
 
-IDD_TOOLMAIN DIALOGEX 0, 0, 400, 200
+IDD_TOOLMAIN DIALOGEX 0, 0, 400, 240
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX
 CAPTION "StartOnlyOne 工具"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
@@ -43,6 +45,8 @@ PUSHBUTTON      "转换桌面快捷方式 (默认设置：冷却180秒)", IDC_CONVERT_DESKTOP_AL
 PUSHBUTTON      "一键备份并转换 (默认设置：冷却180秒)", IDC_BACKUP_AND_CONVERT, 220, 90, 160, 30
 PUSHBUTTON      "转换桌面快捷方式", IDC_CONVERT_GUIDE, 40, 130, 160, 30
 PUSHBUTTON      "备份并转换桌面快捷方式", IDC_BACKUP_CONVERT_GUIDE, 220, 130, 160, 30
+PUSHBUTTON      "关于", IDC_ABOUT, 40, 170, 160, 30
+LTEXT           "版本号", IDC_VERSION_COPYRIGHT, 5, 225, 200, 10
 END
 
 IDD_SELECT_BACKUP DIALOGEX 0, 0, 300, 240
@@ -64,4 +68,21 @@ LTEXT           "请填写冷却时间(秒)：", -1, 10, 15, 110, 10
 EDITTEXT        IDC_COOLDOWN_EDIT, 120, 13, 60, 14, ES_NUMBER
 PUSHBUTTON      "确定", IDOK, 100, 35, 40, 15
 PUSHBUTTON      "取消", IDCANCEL, 150, 35, 40, 15
+END
+
+IDD_ABOUT DIALOGEX 0, 0, 300, 175
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "关于"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+LTEXT           "StartOnlyOne 版本 version", IDC_VERSION, 10, 15, 290, 10
+LTEXT           "Copyright (C) 2026 李丰毅", IDC_COPYRIGHT, 10, 25, 290, 10
+LTEXT           "开源许可：MIT License", -1, 10, 35, 290, 10
+LTEXT           "本软件使用了以下第三方库：", -1, 10, 55, 290, 10
+LTEXT           "jsoncpp (https://github.com/open-source-parsers/jsoncpp)", -1, 20, 65, 280, 10
+LTEXT           "根据 MIT 许可证使用，其版权归原作者所有", -1, 20, 75, 280, 10
+LTEXT           "详情请见软件安装目录下的 licenses/jsoncpp-license.txt。", -1, 20, 85, 280, 10
+LTEXT           "本软件的部分功能基于 Windows API 开发。", -1, 10, 105, 290, 10
+LTEXT           "项目主页：https://github.com/lfy090926/StartOnlyOne", -1, 10, 125, 290, 10
+PUSHBUTTON      "确定", IDOK, 130, 145, 40, 15
 END

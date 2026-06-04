@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Windows](https://img.shields.io/badge/platform-Windows-0078d6)]()
-[![Version](https://img.shields.io/badge/version-1.0.0-green)]()
+[![Version](https://img.shields.io/badge/version-1.0.2-green)]()
 
 Windows 下的一款防重复启动工具，将任何程序的快捷方式转换为受管理的启动器，支持冷却时间、备份还原、任务栏托管。
 
@@ -29,7 +29,7 @@ Windows 下的一款防重复启动工具，将任何程序的快捷方式转换
 
 ### 步骤
 ```bash
-git clone https://github.com/yourname/StartOnlyOne.git
+git clone https://github.com/lfy090926/StartOnlyOne.git
 cd StartOnlyOne
 # 用 VS 打开 StartOnlyOne.sln
 # 设置 Release 配置，生成解决方案
@@ -44,3 +44,8 @@ cd StartOnlyOne
   A:某些软件的可执行文件可能没有图标资源，导致转换后的快捷方式图标丢失。目前开发者正在努力寻找解决方案。
 
 本软件使用了 [jsoncpp](https://github.com/open-source-parsers/jsoncpp) 库，其版权归原作者所有，许可证见 [licenses/jsoncpp-license.txt](licenses/jsoncpp-license.txt)。
+
+# 
+本软件的开发者是目前是一名高中生，正在学习编程和软件开发，希望这个工具能帮助到大家。如果有任何问题或建议，欢迎在 GitHub 上提 issue。如果您愿意的话，也可以考虑[捐赠](docs/donate.md)一些零钱支持我的学习和开发。谢谢大家！
+
+> 项目中存在一些AI代码，但都经过了人工审核和修改,包括README.md、项目里的C++代码、以及.rc文件

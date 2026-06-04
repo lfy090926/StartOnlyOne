@@ -7,6 +7,8 @@
 #endif
 #define _WIN32_IE 0x0600          // 要求公共控件版本为 6.0 或以上（启用视觉样式）
 #define COOLDOWN 180              // 全局默认冷却时间（秒），用于向导中的初始值
+#define VERSION L"1.0.2"          //版本号
+#define COPYRIGHT L"2026 李丰毅"   //著作权信息
 
 #include <Windows.h>
 #include <tchar.h>
@@ -26,7 +28,6 @@
 #include <functional>
 #include <vector>
 #include <algorithm>
-#include <filesystem>
 
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "shell32.lib")
@@ -188,8 +189,8 @@ std::wstring GetCurrentTimestampStr() {
 
 // 将 Unix 时间戳字符串转换为本地日期时间字符串（用于界面显示）
 std::wstring TimestampToDisplay(const std::wstring& timestamp) {
-    char* wTimeStamp = (char*)timestamp.data();   // 注意：这里转换方式较危险，实际应使用 std::stoll
-    std::time_t CurrentTime = std::stoll(timestamp);
+    std::string sTimeStamp = WideToUTF8(timestamp);
+    std::time_t CurrentTime = std::stoll(sTimeStamp);
     struct tm LocalTime;
     localtime_s(&LocalTime, &CurrentTime);
     int year = LocalTime.tm_year + 1900,
@@ -199,7 +200,7 @@ std::wstring TimestampToDisplay(const std::wstring& timestamp) {
         minute = LocalTime.tm_min,
         second = LocalTime.tm_sec;
     wchar_t buf[64];
-    swprintf(buf, 64, L"%04d年%02d月%02d日 %02d:%02d:%02d",
+    swprintf_s(buf, 64, L"%04d年%02d月%02d日 %02d:%02d:%02d",
         year, month, day, hour, minute, second);
     return std::wstring(buf);
 }
@@ -590,6 +591,10 @@ INT_PTR CALLBACK WizardProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
         CheckRadioButton(hDlg, IDC_MODE_MANAGED, IDC_MODE_FREE, IDC_MODE_MANAGED);
         // 设置冷却时间编辑框的默认值
         SetDlgItemInt(hDlg, IDC_COOLDOWN_EDIT, COOLDOWN, FALSE);
+        //版本号和著作权信息
+        wchar_t text_IDC_VERSION_COPYRIGHT[64];
+        swprintf_s(text_IDC_VERSION_COPYRIGHT, 64, L"Version:%ls    Copyright (C) %ls", VERSION, COPYRIGHT);
+        SetDlgItemTextW(hDlg, IDC_VERSION_COPYRIGHT, text_IDC_VERSION_COPYRIGHT);
         return TRUE;
     }
     case WM_COMMAND: {
@@ -711,7 +716,7 @@ void ConvertDesktopAllLnk(HWND hParent, int cooldown) {
     }
 
     wchar_t msg[256];
-    swprintf(msg, 256, L"转换完成：%d/%d 个快捷方式", cnt, (int)lnks.size());
+    swprintf_s(msg, 256, L"转换完成：%d/%d 个快捷方式", cnt, (int)lnks.size());
     MessageBoxW(hParent, msg, L"结果", MB_OK);
 }
 
@@ -862,6 +867,49 @@ INT_PTR CALLBACK BackupConvertGuideProc(HWND hDlg, UINT msg, WPARAM wParam, LPAR
     return FALSE;
 }
 
+//关于对话框过程
+INT_PTR CALLBACK AboutProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
+    switch (msg) {
+    case WM_INITDIALOG: {
+        // 居中窗口
+        RECT rcDlg, rcScreen;
+        GetWindowRect(hDlg, &rcDlg);
+        SystemParametersInfoW(SPI_GETWORKAREA, 0, &rcScreen, 0);
+        int x = rcScreen.left + (rcScreen.right - rcScreen.left - (rcDlg.right - rcDlg.left)) / 2;
+        int y = rcScreen.top + (rcScreen.bottom - rcScreen.top - (rcDlg.bottom - rcDlg.top)) / 2;
+        SetWindowPos(hDlg, NULL, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
+
+        // 设置窗口图标
+        HINSTANCE hInst = (HINSTANCE)GetWindowLongPtrW(hDlg, GWLP_HINSTANCE);
+        HICON hIcon = LoadIconW(hInst, MAKEINTRESOURCEW(IDI_MAIN_ICON));
+        SendMessageW(hDlg, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+
+        //设置文字
+        wchar_t text_IDC_VERSION[64];
+        swprintf_s(text_IDC_VERSION, 64, L"StartOnlyOne 版本 %ls", VERSION);
+        wchar_t text_IDC_COPYRIGHT[64];
+        swprintf_s(text_IDC_COPYRIGHT, 64, L"Copyright (C) %ls", COPYRIGHT);
+
+        SetDlgItemTextW(hDlg, IDC_VERSION, text_IDC_VERSION);
+        SetDlgItemTextW(hDlg, IDC_COPYRIGHT, text_IDC_COPYRIGHT);
+        return TRUE;
+    }
+    case WM_COMMAND:
+    {
+        switch (LOWORD(wParam)) {
+        case IDOK:
+        {
+            EndDialog(hDlg, IDOK);
+            return TRUE;
+        }
+        return FALSE;
+        }
+    }
+    return FALSE;
+    }
+    return FALSE;
+}
+
 // 工具主界面过程
 INT_PTR CALLBACK ToolMainProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
@@ -888,6 +936,10 @@ INT_PTR CALLBACK ToolMainProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         swprintf_s(text_IDC_BACKUP_AND_CONVERT, 64, L"一键备份并转换 (默认设置：冷却%ls秒)", wCOOLDOWN);
         SetDlgItemTextW(hDlg, IDC_CONVERT_DESKTOP_ALL, text_IDC_CONVERT_DESKTOP_ALL);
         SetDlgItemTextW(hDlg, IDC_BACKUP_AND_CONVERT, text_IDC_BACKUP_AND_CONVERT);
+
+        wchar_t text_IDC_VERSION_COPYRIGHT[64];
+        swprintf_s(text_IDC_VERSION_COPYRIGHT, 64, L"StartOnlyOne Version:%ls    Copyright (C) %ls", VERSION, COPYRIGHT);
+        SetDlgItemTextW(hDlg, IDC_VERSION_COPYRIGHT, text_IDC_VERSION_COPYRIGHT);
 
         return TRUE;
     }
@@ -928,6 +980,11 @@ INT_PTR CALLBACK ToolMainProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         case IDC_BACKUP_CONVERT_GUIDE:   // 备份并转换向导
         {
             DialogBoxParamW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_CONVERT_GUIDE), hDlg, BackupConvertGuideProc, 0);
+            return TRUE;
+        }
+        case IDC_ABOUT:                 //关于
+        {
+            DialogBoxParamW(GetModuleHandleW(NULL), MAKEINTRESOURCEW(IDD_ABOUT), hDlg, AboutProc, 0);
             return TRUE;
         }
         case IDCANCEL:
