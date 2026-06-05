@@ -4,6 +4,8 @@
 [![Windows](https://img.shields.io/badge/platform-Windows-0078d6)]()
 [![Version](https://img.shields.io/badge/version-1.0.2-green)]()
 
+<img src="Resources/Images/StartOnlyOne.png" width="100" alt="StartOnlyOne">
+
 Windows 下的一款防重复启动工具，将任何程序的快捷方式转换为受管理的启动器，支持冷却时间、备份还原、任务栏托管。
 
 ## 功能特性
@@ -17,9 +19,19 @@ Windows 下的一款防重复启动工具，将任何程序的快捷方式转换
 1. 从 [Releases](https://github.com/lfy090926/StartOnlyOne/releases) 下载最新 `StartOnlyOne.exe`
 2. 首次运行会自动注册右键“新建”菜单
 3. 在桌面空白处右键 → 新建 → **SOO向导(双击启动向导)**
-4. 选择目标程序，设置冷却时间，点击确定
-5. 桌面出现同名快捷方式，多次尝试双击即可体验防重复效果
-6. 直接运行`StartOnlyOne.exe`可以使用批量转换功能,包括当前用户的桌面和公共桌面以及任务栏上的快捷方式。
+    ![docs/resources/images/Start_1.png](docs/resources/images/Start_1.png)
+4. 双击打开向导文件(如图)
+
+    ![docs/resources/images/Start_2.png](docs/resources/images/Start_2.png)
+
+5. 选择目标程序，设置冷却时间，填写目标文件名，选择创建模式，点击确定
+    ![docs/resources/images/Start_3.png](docs/resources/images/Start_3.png)
+    >目标文件名为快捷方式或SOO文件名，默认自动填写目标程序名
+    
+    >托管模式创建快捷方式，自由模式创建SOO文件
+6. 桌面出现同名快捷方式，多次尝试双击即可体验防重复效果
+7. 直接运行`StartOnlyOne.exe`可以使用批量转换功能,包括当前用户的桌面和公共桌面以及任务栏上的快捷方式。
+    ![docs/resources/images/Start_4.png](docs/resources/images/Start_4.png)
 
 ## 编译（从源码）
 ### 环境要求
@@ -48,4 +60,4 @@ cd StartOnlyOne
 # 
 本软件的开发者是目前是一名高中生，正在学习编程和软件开发，希望这个工具能帮助到大家。如果有任何问题或建议，欢迎在 GitHub 上提 issue。如果您愿意的话，也可以考虑[捐赠](docs/donate.md)一些零钱支持我的学习和开发。谢谢大家！
 
-> 项目中存在一些AI代码，但都经过了人工审核和修改,包括README.md、项目里的C++代码、以及.rc文件
+> 项目中存在一些AI代码，但都经过了人工审核和修改,包括README.md的部分内容、项目里的部分C++代码和注释、以及.rc资源文件部分内容。
