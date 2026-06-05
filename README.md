@@ -4,7 +4,7 @@
 [![Windows](https://img.shields.io/badge/platform-Windows-0078d6)]()
 [![Version](https://img.shields.io/badge/version-1.0.2-green)]()
 
-<img src="Resources/Images/StartOnlyOne.jpg" width="100" alt="StartOnlyOne">
+<img src="docs/Resources/Images/StartOnlyOne.png" width="100" alt="StartOnlyOne">
 
 Windows 下的一款防重复启动工具，将任何程序的快捷方式转换为受管理的启动器，支持冷却时间、备份还原、任务栏托管。
 
