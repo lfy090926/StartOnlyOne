@@ -7,7 +7,7 @@
 #endif
 #define _WIN32_IE 0x0600          // 要求公共控件版本为 6.0 或以上（启用视觉样式）
 #define COOLDOWN 180              // 全局默认冷却时间（秒），用于向导中的初始值
-#define VERSION L"1.1.0"          //版本号
+#define VERSION L"1.1.1"          //版本号
 #define COPYRIGHT L"2026 李丰毅"   //著作权信息
 
 #include <Windows.h>

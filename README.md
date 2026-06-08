@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Windows](https://img.shields.io/badge/platform-Windows-0078d6)]()
-[![Version](https://img.shields.io/badge/version-1.1.0-green)]()
+[![Version](https://img.shields.io/badge/version-1.1.1-green)]()
 
 <img src="docs/resources/images/StartOnlyOne.png" width="100" alt="StartOnlyOne">
 
@@ -46,6 +46,11 @@ cd StartOnlyOne
 # 用 VS 打开 StartOnlyOne.sln
 # 设置 Release 配置，生成解决方案
 ```
+> 1.1.1版本后支持makefile，使用make命令编译
+> ```bash
+> # makefile需要配置VC环境变量和jsoncpp库路径
+> make
+> ```
 ## 常见问题
 - **Q:为什么程序需要管理员权限?**
 
