@@ -7,7 +7,7 @@
 #endif
 #define _WIN32_IE 0x0600          // 要求公共控件版本为 6.0 或以上（启用视觉样式）
 #define COOLDOWN 180              // 全局默认冷却时间（秒），用于向导中的初始值
-#define VERSION L"1.0.2"          //版本号
+#define VERSION L"1.1.0"          //版本号
 #define COPYRIGHT L"2026 李丰毅"   //著作权信息
 
 #include <Windows.h>
@@ -28,6 +28,7 @@
 #include <functional>
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 #pragma comment(lib, "ole32.lib")
 #pragma comment(lib, "shell32.lib")
@@ -52,7 +53,8 @@ INITCOMMONCONTROLSEX icc = { sizeof(INITCOMMONCONTROLSEX), ICC_LISTVIEW_CLASSES 
 void CreateSoo(const std::wstring& sooFileName, const std::wstring& path, const std::wstring& args,
     long long currentStartTime, int preventTime);
 bool CreateManaged(const std::wstring& targetExe, const std::wstring& userArgs, const std::wstring& userFileName,
-    int cooldown, const std::wstring& defaultFolder, bool overwrite, HWND hwndOwner);
+    int cooldown, const std::wstring& defaultFolder, bool overwrite, HWND hwndOwner, std::wstring iconSource,
+    int iconIndex);
 void BackupDesktopAllLnk(HWND hParent);
 void RestoreBackupToDesktops(const std::wstring& backupFolder, HWND hParent);
 void ConvertDesktopAllLnk(HWND hParent, int cooldown);
@@ -126,7 +128,7 @@ void GetDirFromPath(const std::wstring& filePath, std::wstring& outDir) {
 //   arguments   - 命令行参数（为空则无参数）
 //   iconSource  - 图标的来源文件（通常是目标 exe，也可能是 dll 等）
 bool CreateShortcutWithIcon(const std::wstring& lnkPath, const std::wstring& targetExe,
-    const std::wstring& arguments, const std::wstring& iconSource) {
+    const std::wstring& arguments, const std::wstring& iconSource, int iconIndex) {
     CoInitialize(NULL);          // 初始化 COM（ShellLink 需要）
     bool success = false;
     IShellLinkW* psl = NULL;
@@ -136,7 +138,7 @@ bool CreateShortcutWithIcon(const std::wstring& lnkPath, const std::wstring& tar
     if (SUCCEEDED(hr)) {
         psl->SetPath(targetExe.c_str());
         psl->SetArguments(arguments.c_str());
-        psl->SetIconLocation(iconSource.c_str(), 0);   // 0 表示文件中的第一个图标
+        psl->SetIconLocation(iconSource.c_str(), iconIndex);   // 0 表示文件中的第一个图标
         IPersistFile* ppf = NULL;
         hr = psl->QueryInterface(IID_IPersistFile, (void**)&ppf);
         if (SUCCEEDED(hr)) {
@@ -297,8 +299,11 @@ bool ConvertSingleLnkToManaged(const std::wstring& lnkPath, int cooldown) {
 
     wchar_t target[MAX_PATH] = { 0 };
     wchar_t args[1024] = { 0 };
+    wchar_t icon[MAX_PATH] = { 0 };
+    int piIcon = 0;
     psl->GetPath(target, MAX_PATH, NULL, SLGP_UNCPRIORITY);
     psl->GetArguments(args, 1024);
+    psl->GetIconLocation(icon, MAX_PATH, &piIcon);
     ppf->Release();
     psl->Release();
     CoUninitialize();
@@ -313,7 +318,11 @@ bool ConvertSingleLnkToManaged(const std::wstring& lnkPath, int cooldown) {
     GetDirFromPath(lnkPath, folder);
     std::wstring fileName = GetFileNameWithoutExt(lnkPath);
     // 调用 CreateManaged 创建新的快捷方式（overwrite=true 会删除原文件并创建新的）
-    return CreateManaged(targetStr, args, fileName, cooldown, folder, true, NULL);
+    if (icon[1] != '\0') {
+        return CreateManaged(targetStr, args, fileName, cooldown, folder, true, NULL, icon, piIcon);
+    }
+    return CreateManaged(targetStr, args, fileName, cooldown, folder, true, NULL, targetStr, 0);
+
 }
 
 // 递归收集文件夹下所有 .lnk 文件的完整路径（包括子文件夹）
@@ -532,7 +541,8 @@ static std::wstring g_defaultFolder;   // 用于在向导对话框间传递用户选择的文件夹
 // 托管模式：创建 SOO 文件，并在 defaultFolder 下生成一个指向该 SOO 的快捷方式
 // 快捷方式的图标取自 targetExe
 bool CreateManaged(const std::wstring& targetExe, const std::wstring& userArgs, const std::wstring& userFileName,
-    int cooldown, const std::wstring& defaultFolder, bool overwrite, HWND hwndOwner) {
+    int cooldown, const std::wstring& defaultFolder, bool overwrite, HWND hwndOwner, std::wstring iconSource,
+    int iconIndex) {
     std::wstring sooPath = GetSOOPath(targetExe, userArgs, cooldown);
     CreateSoo(sooPath, targetExe, userArgs, 0, cooldown);
 
@@ -545,7 +555,7 @@ bool CreateManaged(const std::wstring& targetExe, const std::wstring& userArgs, 
     }
     // 删除已有快捷方式（如果存在），确保覆盖或重新创建
     DeleteFileW(baseLnkPath.c_str());
-    return CreateShortcutWithIcon(baseLnkPath, sooPath, L"", targetExe);
+    return CreateShortcutWithIcon(baseLnkPath, sooPath, L"", iconSource, iconIndex);
 }
 
 // 自由模式：仅在 defaultFolder 下创建 SOO 文件，不创建快捷方式
@@ -593,7 +603,7 @@ INT_PTR CALLBACK WizardProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
         SetDlgItemInt(hDlg, IDC_COOLDOWN_EDIT, COOLDOWN, FALSE);
         //版本号和著作权信息
         wchar_t text_IDC_VERSION_COPYRIGHT[64];
-        swprintf_s(text_IDC_VERSION_COPYRIGHT, 64, L"Version:%ls    Copyright (C) %ls", VERSION, COPYRIGHT);
+        swprintf_s(text_IDC_VERSION_COPYRIGHT, 64, L"StartOnlyOne Version:%ls    Copyright (C) %ls", VERSION, COPYRIGHT);
         SetDlgItemTextW(hDlg, IDC_VERSION_COPYRIGHT, text_IDC_VERSION_COPYRIGHT);
         return TRUE;
     }
@@ -635,7 +645,8 @@ INT_PTR CALLBACK WizardProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPara
             BOOL isManaged = IsDlgButtonChecked(hDlg, IDC_MODE_MANAGED) == BST_CHECKED;
             int cooldown = max(0, GetDlgItemInt(hDlg, IDC_COOLDOWN_EDIT, NULL, FALSE));
 
-            bool success = isManaged ? CreateManaged(targetExe, args, fileName, cooldown, g_defaultFolder, overwrite, hDlg)
+            bool success = isManaged ? CreateManaged(targetExe, args, fileName, cooldown,
+                g_defaultFolder, overwrite, hDlg, targetExe, 0)
                 : CreateFree(targetExe, args, fileName, cooldown, g_defaultFolder, overwrite, hDlg);
             if (success) {
                 MessageBoxW(hDlg, L"创建成功！", L"完成", MB_OK);
@@ -997,7 +1008,7 @@ INT_PTR CALLBACK ToolMainProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
         EndDialog(hDlg, IDCANCEL);
         return TRUE;
     }
-    return FALSE;
+     return FALSE;
 }
 
 // 工具主界面入口
