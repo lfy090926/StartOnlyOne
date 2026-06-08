@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Windows](https://img.shields.io/badge/platform-Windows-0078d6)]()
-[![Version](https://img.shields.io/badge/version-1.0.2-green)]()
+[![Version](https://img.shields.io/badge/version-1.1.0-green)]()
 
 <img src="docs/resources/images/StartOnlyOne.png" width="100" alt="StartOnlyOne">
 
@@ -51,9 +51,6 @@ cd StartOnlyOne
 
   A:公共桌面路径（C:\Users\Public\Desktop）通常需要管理员权限才能写入。
 
-- **Q:为什么有些快捷方式转换之后图标没有了?**
-
-  A:某些软件的可执行文件可能没有图标资源，导致转换后的快捷方式图标丢失。目前开发者正在努力寻找解决方案。
 
 本软件使用了 [jsoncpp](https://github.com/open-source-parsers/jsoncpp) 库，其版权归原作者所有，许可证见 [licenses/jsoncpp-license.txt](licenses/jsoncpp-license.txt)。
 
