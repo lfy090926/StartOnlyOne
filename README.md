@@ -1,5 +1,7 @@
 ﻿# StartOnlyOne
 
+> 主播最紧要备战期末考试了,暂时不更新了，等暑假再说
+
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Windows](https://img.shields.io/badge/platform-Windows-0078d6)]()
 [![Version](https://img.shields.io/badge/version-1.1.1-green)]()
