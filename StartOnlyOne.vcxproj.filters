@@ -19,6 +19,33 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="LICENSE" />
+    <ClCompile Include="CharConvert.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="FileOperation.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SOO_Kernel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SOO_Ex.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GetPaths.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Init.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Time.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Proc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="UI.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc">
@@ -27,6 +54,36 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CharConvert.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="common.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="FileOperation.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SOO_Kernel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GetPaths.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SOO_Ex.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Init.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Time.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Proc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="UI.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
