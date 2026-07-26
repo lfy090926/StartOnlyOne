@@ -1,7 +1,4 @@
 ﻿# StartOnlyOne
-
-> 主播最紧要备战期末考试了,暂时不更新了，等暑假再说
-
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Windows](https://img.shields.io/badge/platform-Windows-0078d6)]()
 [![Version](https://img.shields.io/badge/version-1.1.1-green)]()
@@ -11,11 +8,11 @@
 Windows 下的一款防重复启动工具，将任何程序的快捷方式转换为受管理的启动器，支持冷却时间、备份还原、任务栏托管。
 
 ## 功能特性
-- 🚀 将任意 `.exe` 转换为托管快捷方式，自动防重复启动
-- ⏱️ 可自定义冷却时间（秒），不同设置生成独立配置文件
-- 💾 一键备份桌面（含公共桌面）和任务栏上的快捷方式
-- 🔄 一键还原备份，支持按时间选择恢复点
-- 🎨 快捷方式图标保持原程序图标，体验无缝
+- 将任意 `.exe` 转换为托管快捷方式，自动防重复启动
+- 可自定义冷却时间（秒），不同设置生成独立配置文件
+- 一键备份桌面（含公共桌面）和任务栏上的快捷方式
+- 一键还原备份，支持按时间选择恢复点
+- 快捷方式图标保持原程序图标，体验无缝
 
 ## 快速开始
 1. 从 [Releases](https://github.com/lfy090926/StartOnlyOne/releases) 下载最新 `StartOnlyOne.exe`
@@ -62,6 +59,6 @@ cd StartOnlyOne
 本软件使用了 [jsoncpp](https://github.com/open-source-parsers/jsoncpp) 库，其版权归原作者所有，许可证见 [licenses/jsoncpp-license.txt](licenses/jsoncpp-license.txt)。
 
 # 
-本软件的开发者是目前是一名高中生，正在学习编程和软件开发，希望这个工具能帮助到大家。如果有任何问题或建议，欢迎在 GitHub 上提 issue。如果您愿意的话，也可以考虑[捐赠](docs/donate.md)一些零钱支持我的学习和开发。谢谢大家！
+本软件的开发者是目前是一名高中生，正在学习编程和软件开发，希望这个工具能帮助到大家。如果有任何问题或建议，欢迎在 GitHub 上提 issue 和 PR。如果您愿意的话，也可以考虑[捐赠](docs/donate.md)一些零钱支持我的学习和开发。谢谢大家！
 
 > 项目中存在一些AI代码，但都经过了人工审核和修改,包括README.md的部分内容、项目里的部分C++代码和注释、以及.rc资源文件部分内容。
