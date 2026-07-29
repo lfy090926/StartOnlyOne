@@ -34,17 +34,6 @@ void MakeDir(const std::wstring& path) {
     _wmkdir(tempPath);                  // 创建最后一级
 }
 
-// 从完整路径中提取目录部分（包含末尾反斜杠）
-void GetDirFromPath(const std::wstring& filePath, std::wstring& outDir) {
-    size_t pos = filePath.find_last_of(L"\\/");
-    if (pos != std::wstring::npos) {
-        outDir = filePath.substr(0, pos + 1);
-    }
-    else {
-        outDir = L".";                  // 当前目录
-    }
-}
-
 // 创建指向 targetExe 的快捷方式，并设置图标为 iconSource 的第一个图标
 // 参数:
 //   lnkPath     - 要创建的 .lnk 文件完整路径

@@ -2,6 +2,7 @@
 #include <fstream>
 #include <json/json.h>
 #include "CharConvert.h"
+#include "GetPaths.h"
 
 // 检查 SOO 文件是否有效：存在、非空、JSON 格式正确、包含必要字段
 bool IsSooFileValid(const std::wstring& filePath) {
@@ -57,5 +58,7 @@ void ReadSoo(const std::wstring& file) {
     CreateSoo(file, path, args, (long long)CurrentTime, preventTime);
     // 冷却判断：如果距离上次启动时间不足 preventTime 秒，则不启动
     if (CurrentTime - currentStartTime < preventTime) return;
-    ShellExecuteW(NULL, L"open", path.c_str(), args.empty() ? NULL : args.c_str(), NULL, SW_SHOWNORMAL);
+    std::wstring WorkDir;
+    GetDirFromPath(path.c_str(), WorkDir);
+    ShellExecuteW(NULL, L"open", path.c_str(), args.empty() ? NULL : args.c_str(), WorkDir.data(), SW_SHOWNORMAL);
 }

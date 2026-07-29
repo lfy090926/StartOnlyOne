@@ -74,3 +74,14 @@ std::wstring GetSOOPath(const std::wstring& targetExePath, const std::wstring& a
     return path;
 }
 
+// 从完整路径中提取目录部分（包含末尾反斜杠）
+void GetDirFromPath(const std::wstring& filePath, std::wstring& outDir) {
+    size_t pos = filePath.find_last_of(L"\\/");
+    if (pos != std::wstring::npos) {
+        outDir = filePath.substr(0, pos + 1);
+    }
+    else {
+        outDir = L".";                  // 当前目录
+    }
+}
+

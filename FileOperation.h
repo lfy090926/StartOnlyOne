@@ -21,9 +21,6 @@ std::string GetPathHash(const std::string& utf8Str);
 // 原理：逐个创建每级子目录，若已存在则跳过
 void MakeDir(const std::wstring& path);
 
-// 从完整路径中提取目录部分（包含末尾反斜杠）
-void GetDirFromPath(const std::wstring& filePath, std::wstring& outDir);
-
 // 创建指向 targetExe 的快捷方式，并设置图标为 iconSource 的第一个图标
 // 参数:
 //   lnkPath     - 要创建的 .lnk 文件完整路径

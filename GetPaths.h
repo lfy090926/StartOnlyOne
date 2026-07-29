@@ -26,3 +26,6 @@ std::wstring GetTaskbarPinnedPath();
 // 计算 SOO 文件的存储路径（基于 目标程序路径 + 参数 + 冷却时间 的哈希值）
 // 注意：冷却时间也参与哈希，因此不同冷却时间会生成不同的 SOO 文件（隔离配置）
 std::wstring GetSOOPath(const std::wstring& targetExePath, const std::wstring& args, int cooldown);
+
+// 从完整路径中提取目录部分（包含末尾反斜杠）
+void GetDirFromPath(const std::wstring& filePath, std::wstring& outDir);
